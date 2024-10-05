@@ -4,11 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="174d653e-cdcb-4594-bdf2-e3597d76293d" name="Changes" comment="add requirements.txt">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/poetry.lock" beforeDir="false" afterPath="$PROJECT_DIR$/poetry.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
-    </list>
+    <list default="true" id="174d653e-cdcb-4594-bdf2-e3597d76293d" name="Changes" comment="add requirements.txt" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -59,7 +55,7 @@
       <option name="presentableId" value="Default" />
       <updated>1728096507579</updated>
       <workItem from="1728154562507" duration="2312000" />
-      <workItem from="1728159551508" duration="7019000" />
+      <workItem from="1728159551508" duration="9553000" />
     </task>
     <task id="LOCAL-00001" summary="add requirements.txt">
       <option name="closed" value="true" />
