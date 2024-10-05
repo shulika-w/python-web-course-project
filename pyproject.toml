@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "python-web-hw-11"
+name = "python-web-course-project"
 version = "0.1.0"
 description = ""
 authors = ["shulika-w <shulika.w@gmail.com>"]
