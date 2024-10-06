@@ -7,7 +7,8 @@ from datetime import datetime, timedelta, timezone
 from os import urandom
 from typing import Optional
 
-from jose import JWTError, jwt
+from jose import jwt
+from jose.exceptions import JWTError
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext

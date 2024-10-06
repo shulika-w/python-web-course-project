@@ -21,7 +21,7 @@ libgravatar = "^1.0.4"
 jose = "^1.0.0"
 passlib = "^1.7.4"
 python-multipart = "^0.0.10"
-bcrypt = "^4.2.0"
+bcrypt = "4.0.1"
 pydantic-settings = "^2.5.2"
 redis = "^5.0.8"
 fastapi-limiter = "^0.1.6"
@@ -32,6 +32,7 @@ pytest = "^8.3.3"
 aiosqlite = "^0.20.0"
 sphinx = "^8.0.2"
 poetry-plugin-export = "^1.8.0"
+python-jose = "^3.3.0"
 
 
 [build-system]

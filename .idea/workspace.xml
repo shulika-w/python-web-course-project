@@ -4,8 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="174d653e-cdcb-4594-bdf2-e3597d76293d" name="Changes" comment="">
+    <list default="true" id="174d653e-cdcb-4594-bdf2-e3597d76293d" name="Changes" comment="add requirements.txt">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/poetry.lock" beforeDir="false" afterPath="$PROJECT_DIR$/poetry.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,19 +28,20 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;dev&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/milvus/Documents/Projects/python-web/python-web-course-project&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.main.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "dev",
+    "last_opened_file_path": "/Users/milvus/Documents/Projects/python-web/python-web-course-project",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -56,11 +59,27 @@
       <option name="presentableId" value="Default" />
       <updated>1728096507579</updated>
       <workItem from="1728154562507" duration="2312000" />
-      <workItem from="1728159551508" duration="3691000" />
+      <workItem from="1728159551508" duration="7019000" />
     </task>
+    <task id="LOCAL-00001" summary="add requirements.txt">
+      <option name="closed" value="true" />
+      <created>1728166701735</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1728166701735</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="add requirements.txt" />
+    <option name="LAST_COMMIT_MESSAGE" value="add requirements.txt" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/pyproject_toml$main.coverage" NAME="main Coverage Results" MODIFIED="1728172513810" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
