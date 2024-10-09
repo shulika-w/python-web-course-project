@@ -5,6 +5,8 @@ Module with declaring of connections to PostgreSQL and Redis
 
 from fastapi import HTTPException, status
 import redis.asyncio as redis
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
@@ -15,6 +17,20 @@ from sqlalchemy.ext.asyncio import (
 
 from app.src.conf.config import settings
 
+
+SQLALCHEMY_DATABASE_URL = "${DATABASE}+${DRIVER_SYNC}://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}"
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+# Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 engine: AsyncEngine = create_async_engine(
     settings.sqlalchemy_database_url_async,

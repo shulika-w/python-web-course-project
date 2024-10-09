@@ -11,7 +11,7 @@ from fastapi import FastAPI, Depends, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi_limiter import FastAPILimiter
+from fastapi_limiter  import FastAPILimiter
 from fastapi_limiter.depends import RateLimiter
 
 from sqlalchemy import select, text
@@ -20,8 +20,12 @@ import uvicorn
 
 from app.src.conf.config import settings
 from app.src.database.connect_db import engine, get_session, redis_db0, pool_redis_db
-from app.src.routes import contacts, auth, users
+from app.src.routes import contacts, auth, users, tags, notes
 
+
+app = FastAPI()
+app.include_router(tags.router, prefix='/api')
+app.include_router(notes.router, prefix='/api')
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
