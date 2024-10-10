@@ -10,8 +10,23 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="valera" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 2
@@ -27,14 +42,16 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Python.main.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "dev",
-    "last_opened_file_path": "/Users/milvus/Documents/Projects/python-web/python-web-course-project",
+    "last_opened_file_path": "D:/Python_core_Project/web_final_project/python-web-course-project",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -55,7 +72,8 @@
       <option name="presentableId" value="Default" />
       <updated>1728096507579</updated>
       <workItem from="1728154562507" duration="2312000" />
-      <workItem from="1728159551508" duration="9553000" />
+      <workItem from="1728159551508" duration="7019000" />
+      <workItem from="1728524960829" duration="1789000" />
     </task>
     <task id="LOCAL-00001" summary="add requirements.txt">
       <option name="closed" value="true" />

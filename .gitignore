@@ -162,6 +162,7 @@ cython_debug/
 .idea/workspace.xml
 .idea/.name
 .idea/shelf/
+workspace.xml
 htmlcov
 postgres-data
 test.db
