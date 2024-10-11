@@ -2,7 +2,6 @@
 Module of email sending functions
 """
 
-
 from pathlib import Path
 
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
@@ -10,6 +9,15 @@ from fastapi_mail.errors import ConnectionErrors
 from pydantic import EmailStr, HttpUrl
 
 from app.src.conf.config import settings
+
+# # Імпортуємо стандартний модуль через importlib
+# import importlib
+#
+# email_message = importlib.import_module('email.message')
+
+# Використовуємо власний модуль
+# from . import email_service  # це ваш локальний файл
+from app.src.services import email_service
 
 
 conf = ConnectionConfig(
@@ -28,7 +36,7 @@ conf = ConnectionConfig(
 
 
 async def send_email_for_verification(
-    email: EmailStr, username: str, email_verification_token: str, host: HttpUrl
+        email: EmailStr, username: str, email_verification_token: str, host: HttpUrl
 ):
     """
     Sends an email for verification of the user's email.
@@ -63,7 +71,7 @@ async def send_email_for_verification(
 
 
 async def send_email_for_password_reset(
-    email: EmailStr, username: str, password_reset_token: str, host: HttpUrl
+        email: EmailStr, username: str, password_reset_token: str, host: HttpUrl
 ):
     """
     Sends an email for the user's password reset.

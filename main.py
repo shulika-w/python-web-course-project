@@ -22,6 +22,12 @@ from app.src.conf.config import settings
 from app.src.database.connect_db import engine, get_session, redis_db0, pool_redis_db
 from app.src.routes import contacts, auth, users
 
+import asyncio
+import sys
+
+if sys.platform.startswith("win"):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

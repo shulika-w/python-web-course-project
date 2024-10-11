@@ -9,6 +9,8 @@ class Settings(BaseSettings):
         env_file=pathlib.Path(__file__).resolve().parent.parent.parent.parent / ".env",
         env_file_encoding="utf-8",
         extra="ignore",
+
+
     )
 
     api_name: str
