@@ -30,7 +30,7 @@ from app.src.schemas.users import (
 from app.src.schemas.tokens import TokenModel, TokenPasswordSetModel
 from app.src.repository import users as repository_users
 from app.src.services.auth import auth_service
-from app.src.services.email import (
+from app.src.services.email_service import (
     send_email_for_verification,
     send_email_for_password_reset,
 )

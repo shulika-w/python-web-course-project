@@ -2,7 +2,6 @@
 Module of authentication class and methods
 """
 
-
 from datetime import datetime, timedelta, timezone
 from os import urandom
 from typing import Optional
@@ -18,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.src.conf.config import settings
 from app.src.database.connect_db import get_session, get_redis_db1
 from app.src.repository import users as repository_users
+# from .auth_service import get_current_user  # Функція для отримання поточного користувача
 
 
 class Auth:
@@ -51,7 +51,7 @@ class Auth:
         return self.pwd_context.hash(password)
 
     async def create_access_token(
-        self, data: dict, expires_delta: Optional[float] = None
+            self, data: dict, expires_delta: Optional[float] = None
     ):
         """
         Creates the access token.
@@ -76,8 +76,19 @@ class Auth:
         )
         return encoded_access_token
 
+    async def role_required(role: str):
+        def decorator(current_user: User = Depends(get_current_user)):
+            if current_user.role != role:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Not enough permissions",
+                )
+            return current_user
+
+        return decorator
+
     async def create_refresh_token(
-        self, data: dict, expires_delta: Optional[float] = None
+            self, data: dict, expires_delta: Optional[float] = None
     ):
         """
         Creates the refresh token.
@@ -107,7 +118,7 @@ class Auth:
         return encoded_refresh_token
 
     async def create_email_verification_token(
-        self, data: dict, expires_delta: Optional[float] = None
+            self, data: dict, expires_delta: Optional[float] = None
     ):
         """
         Creates the email verification token.
@@ -137,7 +148,7 @@ class Auth:
         return encoded_email_verification_token
 
     async def create_password_reset_token(
-        self, data: dict, expires_delta: Optional[float] = None
+            self, data: dict, expires_delta: Optional[float] = None
     ):
         """
         Creates the password reset token.
@@ -167,7 +178,7 @@ class Auth:
         return encoded_password_reset_token
 
     async def create_password_set_token(
-        self, data: dict, expires_delta: Optional[float] = None
+            self, data: dict, expires_delta: Optional[float] = None
     ):
         """
         Creates the password set token.
@@ -313,10 +324,10 @@ class Auth:
             raise credentials_exception
 
     async def get_current_user(
-        self,
-        access_token: str = Depends(oauth2_scheme),
-        session: AsyncSession = Depends(get_session),
-        cache: Redis = Depends(get_redis_db1),
+            self,
+            access_token: str = Depends(oauth2_scheme),
+            session: AsyncSession = Depends(get_session),
+            cache: Redis = Depends(get_redis_db1),
     ):
         """
         Gets the current user.
