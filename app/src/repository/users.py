@@ -3,6 +3,7 @@ Module of users' CRUD
 """
 
 
+from datetime import date
 import pickle
 
 from libgravatar import Gravatar
@@ -94,28 +95,6 @@ async def create_user(body: UserModel, session: AsyncSession, cache: Redis) -> U
     await session.refresh(user)
     await set_user_in_cache(user, cache)
     return user
-
-
-async def update_refresh_token(
-    user: User, token: str | None, session: AsyncSession, cache: Redis
-) -> None:
-    """
-    Updates a refresh token for a specific user.
-
-    :param user: The user to update the refresh token for.
-    :type user: User
-    :param token: The refresh token for the user to update or None.
-    :type token: str | None
-    :param session: The database session.
-    :type session: AsyncSession
-    :param cache: The Redis client.
-    :type cache: Redis
-    :return: None.
-    :rtype: None
-    """
-    user.refresh_token = token
-    await session.commit()
-    await set_user_in_cache(user, cache)
 
 
 async def confirm_email(email: EmailStr, session: AsyncSession, cache: Redis) -> None:

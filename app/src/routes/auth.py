@@ -21,6 +21,7 @@ from redis.asyncio.client import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.src.database.connect_db import get_session, get_redis_db1
+from app.src.database.models import User
 from app.src.schemas.users import (
     UserModel,
     UserRequestEmail,
@@ -131,6 +132,23 @@ async def login(
         "token_type": "bearer",
     }
 
+@router.post("/logout")
+async def logout(
+    credentials: HTTPAuthorizationCredentials = Security(security),
+    session: AsyncSession = Depends(get_session),
+    cache: Redis = Depends(get_redis_db1),
+):
+    token = credentials.credentials
+    await auth_service.check_token_in_black_list(token, cache)
+    email = await auth_service.decode_access_token(token)
+    user = await repository_users.get_user_by_email(email, session)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email"
+        )
+    await auth_service.blacklist_token(token, cache)
+    return {"message": "Logout is successful"}
+
 
 @router.get("/refresh_token", response_model=TokenModel)
 async def refresh_token(
@@ -149,20 +167,16 @@ async def refresh_token(
     :rtype: dict
     """
     token = credentials.credentials
+    await auth_service.check_token_in_black_list(token, cache)
     email = await auth_service.decode_refresh_token(token)
     user = await repository_users.get_user_by_email(email, session)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email"
         )
-    if user.refresh_token != token:
-        await repository_users.update_refresh_token(user, None, session, cache)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
-        )
+    await auth_service.blacklist_token(token, cache)
     access_token = await auth_service.create_access_token(data={"sub": email})
     refresh_token = await auth_service.create_refresh_token(data={"sub": email})
-    await repository_users.update_refresh_token(user, refresh_token, session, cache)
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,

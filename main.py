@@ -103,18 +103,6 @@ app.include_router(
     ],
 )
 app.include_router(
-    contacts.router,
-    prefix=BASE_API_ROUTE,
-    dependencies=[
-        Depends(
-            RateLimiter(
-                times=settings.rate_limiter_times,
-                seconds=settings.rate_limiter_seconds,
-            )
-        )
-    ],
-)
-app.include_router(
     users.router,
     prefix=BASE_API_ROUTE,
     dependencies=[

@@ -6,6 +6,7 @@ Module of authentication class and methods
 from datetime import datetime, timedelta, timezone
 from os import urandom
 from typing import Optional
+import pickle
 
 from jose import jwt
 from jose.exceptions import JWTError
@@ -18,7 +19,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.src.conf.config import settings
 from app.src.database.connect_db import get_session, get_redis_db1
 from app.src.repository import users as repository_users
-
 
 class Auth:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -196,6 +196,35 @@ class Auth:
         )
         return encoded_password_set_token
 
+    async def decode_access_token(self, access_token: str):
+        """
+        Decodes the access token.
+        :param access_token: The access token to decode.
+        :type access_token: str
+        :return: The email from the access token.
+        :rtype: EmailStr
+        """
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+        )
+        try:
+            payload = jwt.decode(
+                access_token, self.SECRET_KEY, algorithms=[self.ALGORITHM]
+            )
+            if payload.get("scope") == "access_token":
+                email = payload.get("sub")
+                if email is None:
+                    raise credentials_exception
+                return email
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid scope for token",
+            )
+        except JWTError:
+            raise credentials_exception
+
+
     async def decode_refresh_token(self, refresh_token: str):
         """
         Decodes the refresh token.
@@ -312,6 +341,38 @@ class Auth:
         except JWTError:
             raise credentials_exception
 
+    async def get_expire_from_token(self, token: str):
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid token",
+        )
+        try:
+            payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
+            expire = payload.get("exp")
+            if expire is None:
+                raise credentials_exception
+            return expire
+        except JWTError:
+            raise credentials_exception
+
+    async def blacklist_token(self, token: str, cache: Redis):
+        expire = (
+                round(
+                    await auth_service.get_expire_from_token(token)
+                    - datetime.now(timezone.utc).timestamp()
+                )
+                + 600
+        )
+        await cache.set(f"token: {token}", pickle.dumps(True))
+        await cache.expire(f"token: {token}", expire)
+
+    async def check_token_in_black_list(self, token: str, cache: Redis):
+        if await cache.get(f"token: {token}"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid token",
+            )
+
     async def get_current_user(
         self,
         access_token: str = Depends(oauth2_scheme),
@@ -330,29 +391,17 @@ class Auth:
         :return: The current user.
         :rtype: User
         """
-        credentials_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-        try:
-            payload = jwt.decode(
-                access_token, self.SECRET_KEY, algorithms=[self.ALGORITHM]
-            )
-            if payload.get("scope") == "access_token":
-                email = payload.get("sub")
-                if email is None:
-                    raise credentials_exception
-            else:
-                raise credentials_exception
-        except JWTError:
-            raise credentials_exception
+        await auth_service.check_token_in_black_list(access_token, cache)
+        email = await auth_service.decode_access_token(access_token)
         user = await repository_users.get_user_by_email_from_cache(email, cache)
         if user is None:
             user = await repository_users.get_user_by_email(email, session)
             if user is None:
-                raise credentials_exception
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Could not validate credentials",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
             await repository_users.set_user_in_cache(user, cache)
         return user
 
