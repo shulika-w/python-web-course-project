@@ -363,8 +363,9 @@ class Auth:
                 )
                 + 600
         )
-        await cache.set(f"token: {token}", pickle.dumps(True))
-        await cache.expire(f"token: {token}", expire)
+        if expire > 0:
+            await cache.set(f"token: {token}", pickle.dumps(True))
+            await cache.expire(f"token: {token}", expire)
 
     async def check_token_in_black_list(self, token: str, cache: Redis):
         if await cache.get(f"token: {token}"):

@@ -20,7 +20,7 @@ import uvicorn
 
 from app.src.conf.config import settings
 from app.src.database.connect_db import engine, get_session, redis_db0, pool_redis_db
-from app.src.routes import auth, users
+from app.src.routes import auth, users, tags
 
 
 @asynccontextmanager
@@ -114,7 +114,18 @@ app.include_router(
         )
     ],
 )
-
+app.include_router(
+    tags.router,
+    prefix=BASE_API_ROUTE,
+    dependencies=[
+        Depends(
+            RateLimiter(
+                times=settings.rate_limiter_times,
+                seconds=settings.rate_limiter_seconds,
+            )
+        )
+    ],
+)
 
 @app.get(
     BASE_API_ROUTE + "/healthchecker",

@@ -131,7 +131,7 @@ async def login(
         "token_type": "bearer",
     }
 
-@router.post("/logout")
+@router.get("/logout")
 async def logout(
     credentials: HTTPAuthorizationCredentials = Security(security),
     session: AsyncSession = Depends(get_session),

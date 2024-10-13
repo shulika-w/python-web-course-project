@@ -202,6 +202,9 @@ class Tag(Base):
         secondary=image_tag_m2m, back_populates="tags"
     )
 
+    def __str__(self):
+        return f"#{self.title}"
+
 
 class Rate(Base):
     __tablename__ = "rates"
@@ -225,12 +228,12 @@ class Rate(Base):
     )
     user_id: Mapped[UUID | int] = (
         mapped_column(
-            Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+            Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True
         )
         if settings.test
         else mapped_column(
             UUID(as_uuid=True),
-            ForeignKey("users.id", ondelete="SET NULL"),
+            ForeignKey("users.id", ondelete="CASCADE"),
             nullable=True,
         )
     )
