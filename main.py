@@ -20,7 +20,7 @@ import uvicorn
 
 from app.src.conf.config import settings
 from app.src.database.connect_db import engine, get_session, redis_db0, pool_redis_db
-from app.src.routes import contacts, auth, users
+from app.src.routes import auth, users
 
 
 @asynccontextmanager

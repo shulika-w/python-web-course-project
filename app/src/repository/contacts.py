@@ -12,7 +12,7 @@ from sqlalchemy import select, and_, or_
 from sqlalchemy.engine.result import ScalarResult
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.src.database.models import Contact, User
+from app.src.database.models import User
 from app.src.schemas.contacts import ContactModel
 from app.src.utils.is_leap_year import is_leap_year
 
