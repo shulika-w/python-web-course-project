@@ -1,9 +1,13 @@
+"""
+Module of comments' schemas
+"""
+
 from datetime import datetime
 from pydantic import BaseModel, Field, UUID4, ConfigDict
 
 
 class CommentModel(BaseModel):
-    text: str = Field(max_length=2048)
+    text: str = Field(min_length=2, max_length=2048)
 
 
 class CommentResponse(CommentModel):
