@@ -4,7 +4,8 @@ Module of users' schemas
 
 
 from datetime import datetime, date
-from pydantic import BaseModel, Field, EmailStr, HttpUrl, UUID4, ConfigDict, validator
+
+from pydantic import BaseModel, Field, EmailStr, HttpUrl, UUID4, ConfigDict, field_validator, conint, constr
 
 
 def date_validator(birthday):
@@ -21,9 +22,11 @@ class UserModel(BaseModel):
     first_name: str = Field(max_length=254)
     last_name: str = Field(max_length=254)
     phone: str = Field(max_length=38)
-    birthday: date | str
+    birthday: constr(min_length=10, max_length=10)
 
-    _date_validator = validator("birthday", allow_reuse=True)(date_validator)
+    @field_validator('birthday')
+    def validate_birthday(cls, value):
+        return value
 
 
 class UserRequestEmail(BaseModel):

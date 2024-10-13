@@ -125,7 +125,6 @@ async def login(
         )
     access_token = await auth_service.create_access_token(data={"sub": user.email})
     refresh_token = await auth_service.create_refresh_token(data={"sub": user.email})
-    await repository_users.update_refresh_token(user, refresh_token, session, cache)
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,

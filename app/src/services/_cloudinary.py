@@ -2,7 +2,8 @@
 Module of Cloudinary class and methods
 """
 import cloudinary
-import cloudinary.uploader
+from cloudinary.uploader import upload
+
 from fastapi import HTTPException, UploadFile, status
 from app.src.conf.config import settings
 async def upload_avatar(
