@@ -4,6 +4,7 @@ Module of users' CRUD
 
 import pickle
 
+from fastapi import UploadFile
 from libgravatar import Gravatar
 from pydantic import EmailStr
 from redis.asyncio.client import Redis
@@ -62,12 +63,32 @@ async def get_user_by_email(email: EmailStr, session: AsyncSession) -> User | No
     return user.scalar()
 
 
-async def create_user(body: UserModel, session: AsyncSession, cache: Redis) -> User:
+async def get_user_by_username(username: str, session: AsyncSession) -> User | None:
+    """
+    Gets an user with the specified username.
+
+    :param username: The username of the user to get.
+    :type username: str
+    :param session: The database session.
+    :type session: AsyncSession
+    :return: The user with the specified username, or None if it does not exist.
+    :rtype: User | None
+    """
+    stmt = select(User).filter(func.lower(User.username) == func.lower(username))
+    user = await session.execute(stmt)
+    return user.scalar()
+
+
+async def create_user(
+    data: UserModel, file: UploadFile, session: AsyncSession, cache: Redis
+) -> User:
     """
     Creates a new user.
 
-    :param body: The request body with data for the user to create.
-    :type body: UserModel
+    :param data: The data for the user to create.
+    :type data: UserModel
+    :param file: The uploaded file to create avatar from.
+    :type file: UploadFile
     :param session: The database session.
     :type session: AsyncSession
     :param cache: The Redis client.
@@ -81,13 +102,18 @@ async def create_user(body: UserModel, session: AsyncSession, cache: Redis) -> U
         role = Role.user
     else:
         role = Role.administrator
-    avatar = None
-    try:
-        g = Gravatar(body.email)
-        avatar = g.get_image()
-    except Exception:
-        pass
-    user = User(**body.model_dump(), avatar=avatar, role=role)
+    if file:
+        avatar = await cloudinary_service.upload_avatar(
+            file.file, data.username, file.filename
+        )
+    else:
+        avatar = None
+        try:
+            g = Gravatar(data.email)
+            avatar = g.get_image()
+        except Exception:
+            pass
+    user = User(**data.model_dump(), avatar=avatar, role=role)
     session.add(user)
     await session.commit()
     await session.refresh(user)
@@ -98,6 +124,7 @@ async def create_user(body: UserModel, session: AsyncSession, cache: Redis) -> U
 async def update_user(
     email: EmailStr,
     data: UserUpdateModel,
+    file: UploadFile,
     session: AsyncSession,
     cache: Redis,
 ) -> User:
@@ -106,6 +133,8 @@ async def update_user(
 
     :param data: The data for the user to update.
     :type data: UserUpdateModel
+    :param file: The uploaded file to update avatar from.
+    :type file: UploadFile
     :param session: The database session.
     :type session: AsyncSession
     :param cache: The Redis client.
@@ -118,9 +147,9 @@ async def update_user(
     user.last_name = data.last_name
     user.phone = data.phone
     user.birthday = data.birthday
-    if data.avatar:
+    if file:
         user.avatar = await cloudinary_service.upload_avatar(
-            data.avatar.file, user.username, data.avatar.filename
+            file.file, user.username, file.filename
         )
     await session.commit()
     await set_user_in_cache(user, cache)
@@ -189,25 +218,67 @@ async def set_password(
     await set_user_in_cache(user, cache)
 
 
-async def update_avatar(
-    email: EmailStr, url: str, session: AsyncSession, cache: Redis
+async def set_role_for_user(
+    username: str, role: str, session: AsyncSession, cache: Redis
 ) -> User:
     """
-    Updates an avatar of user with specified email.
+    Іets an user's role.
 
-    :param email: The email of user to update an avatar for.
-    :type email: EmailStr
-    :param url: The url of a new avatar.
-    :type url: str
+    :param username: The username of the user to set role.
+    :type username: str
+    :param role: The user's role to set.
+    :type role: str
     :param session: The database session.
     :type session: AsyncSession
     :param cache: The Redis client.
     :type cache: Redis
-    :return: None.
-    :rtype: None
+    :return: The user for whom the role is set.
+    :rtype: User
     """
-    user = await get_user_by_email(email, session)
-    user.avatar = url
+    user = await get_user_by_username(username, session)
+    user.role = role
+    await session.commit()
+    await set_user_in_cache(user, cache)
+    return user
+
+
+async def activate_user(username: str, session: AsyncSession, cache: Redis) -> User:
+    """
+    Activates the user with specified username.
+
+    :param username: The username of the user to activate.
+    :type username: str
+    :param session: The database session.
+    :type session: AsyncSession
+    :param cache: The Redis client.
+    :type cache: Redis
+    :return: The activated user.
+    :rtype: User
+    """
+    user = await get_user_by_username(username, session)
+    user.is_email_confirmed = True
+    user.is_password_valid = True
+    await session.commit()
+    await set_user_in_cache(user, cache)
+    return user
+
+
+async def inactivate_user(username: str, session: AsyncSession, cache: Redis) -> User:
+    """
+    Inactivates the user with specified username.
+
+    :param username: The username of the user to inactivate.
+    :type username: str
+    :param session: The database session.
+    :type session: AsyncSession
+    :param cache: The Redis client.
+    :type cache: Redis
+    :return: The inactivated user.
+    :rtype: User
+    """
+    user = await get_user_by_username(username, session)
+    user.is_email_confirmed = False
+    user.is_password_valid = False
     await session.commit()
     await set_user_in_cache(user, cache)
     return user

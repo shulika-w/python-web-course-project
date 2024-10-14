@@ -5,7 +5,7 @@ Module of role access class
 
 from typing import List
 
-from fastapi import Depends, HTTPException, status, Request
+from fastapi import Depends, HTTPException, status
 
 from app.src.database.models import User, Role
 from app.src.services.auth import auth_service

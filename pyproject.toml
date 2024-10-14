@@ -34,6 +34,7 @@ sphinx = "^8.0.2"
 poetry-plugin-export = "^1.8.0"
 python-jose = "^3.3.0"
 qrcode = "^8.0"
+nest-asyncio = "^1.6.0"
 
 
 [build-system]

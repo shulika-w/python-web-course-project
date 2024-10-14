@@ -2,11 +2,12 @@
 Module with declaring of SQLAlchemy models
 """
 
-
+import asyncio
 from datetime import datetime, date
 import enum
 from typing import List
 
+import nest_asyncio
 from sqlalchemy import (
     UUID,
     ForeignKey,
@@ -19,16 +20,25 @@ from sqlalchemy import (
     CheckConstraint,
     Table,
     Column,
+    select,
     func,
     text,
 )
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.ext.asyncio import async_object_session
 from sqlalchemy.orm import Mapped, declarative_base, mapped_column, relationship
 
 from app.src.conf.config import settings
 
 
 Base = declarative_base()
+
+
+def async_in_sync(func):
+    async def wrapped(*args, **kwargs):
+        return await func(*args, **kwargs)
+
+    return wrapped
 
 
 class Role(enum.Enum):
@@ -99,7 +109,7 @@ class Image(Base):
         )
     )
     url: Mapped[str] = mapped_column(String(1024), nullable=False)
-    descripition: Mapped[str] = mapped_column(String(1024), nullable=True)
+    description: Mapped[str] = mapped_column(String(1024), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -121,6 +131,19 @@ class Image(Base):
         secondary=image_tag_m2m, back_populates="images"
     )
     rates: Mapped[List["Rate"]] = relationship("Rate", back_populates="image")
+
+    @hybrid_property
+    def rate(self):
+        async def rate_async(self):
+            session = async_object_session(self)
+            stmt = select(func.avg(Rate.rate)).where(Rate.image_id == self.id)
+            rate = await session.execute(stmt)
+            return rate.scalar()
+
+        loop = asyncio.get_running_loop()
+        nest_asyncio.apply(loop)
+        rate = loop.run_until_complete(rate_async(self))
+        return rate
 
 
 class Comment(Base):
