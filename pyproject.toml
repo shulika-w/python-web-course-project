@@ -33,6 +33,7 @@ aiosqlite = "^0.20.0"
 sphinx = "^8.0.2"
 poetry-plugin-export = "^1.8.0"
 python-jose = "^3.3.0"
+qrcode = "^8.0"
 
 
 [build-system]

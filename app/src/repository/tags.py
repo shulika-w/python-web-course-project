@@ -1,6 +1,7 @@
 """
 Module of tags' CRUD
 """
+
 from sqlalchemy import select
 from sqlalchemy.engine.result import ScalarResult
 from sqlalchemy.ext.asyncio import AsyncSession

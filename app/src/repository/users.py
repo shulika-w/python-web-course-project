@@ -2,20 +2,18 @@
 Module of users' CRUD
 """
 
-
-from datetime import date
 import pickle
 
 from libgravatar import Gravatar
 from pydantic import EmailStr
 from redis.asyncio.client import Redis
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.src.conf.config import settings
 from app.src.database.models import Role, User
-from app.src.schemas.users import UserModel
-
+from app.src.schemas.users import UserModel, UserUpdateModel
+from app.src.services._cloudinary import cloudinary_service
 
 async def set_user_in_cache(user: User, cache: Redis) -> None:
     """
@@ -93,6 +91,38 @@ async def create_user(body: UserModel, session: AsyncSession, cache: Redis) -> U
     session.add(user)
     await session.commit()
     await session.refresh(user)
+    await set_user_in_cache(user, cache)
+    return user
+
+
+async def update_user(
+    email: EmailStr,
+    data: UserUpdateModel,
+    session: AsyncSession,
+    cache: Redis,
+) -> User:
+    """
+    Updates an user's profile.
+
+    :param data: The data for the user to update.
+    :type data: UserUpdateModel
+    :param session: The database session.
+    :type session: AsyncSession
+    :param cache: The Redis client.
+    :type cache: Redis
+    :return: The updated user's profile.
+    :rtype: User
+    """
+    user = await get_user_by_email(email, session)
+    user.first_name = data.first_name
+    user.last_name = data.last_name
+    user.phone = data.phone
+    user.birthday = data.birthday
+    if data.avatar:
+        user.avatar = await cloudinary_service.upload_avatar(
+            data.avatar.file, user.username, data.avatar.filename
+        )
+    await session.commit()
     await set_user_in_cache(user, cache)
     return user
 

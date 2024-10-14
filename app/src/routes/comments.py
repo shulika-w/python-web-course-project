@@ -1,5 +1,5 @@
 """
-Module of commentss' routes
+Module of comments' routes
 """
 
 from pydantic import UUID4
@@ -136,6 +136,33 @@ async def read_all_user_comments(
     :return: A list of comments
     """
     return await repository_comments.read_all_user_comments(user_id, offset, limit, session)
+
+@router.get(
+    "/top/{image_id}",
+    response_model=List[CommentResponse],
+    dependencies=[Depends(allowed_operation_get)]
+    )
+
+async def read_top_comments_to_photo(
+    image_id: UUID4 | int,
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=10, ge=1, le=1000),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Returns a list of top(popular) comments for the specified image.
+
+    :param image_id: UUID4 | int: Specify the image id
+    :param offset: int: Specify the offset of the first comment to be returned
+    :param ge: Set a minimum value for the parameter
+    :param limit: int: Limit the number of comments to be returned
+    :param ge: Set a minimum value for the parameter
+    :param le: Limit the number of comments returned
+    :param session: AsyncSession: Pass the database session to the function
+    :param : Get the comments of a photo
+    :return: A list of comments
+"""
+    return await repository_comments.read_top_comments_to_photo(image_id, offset, limit, session)
 
 
 @router.post(

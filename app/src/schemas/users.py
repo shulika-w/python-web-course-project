@@ -11,11 +11,12 @@ from pydantic import (
     HttpUrl,
     UUID4,
     ConfigDict,
+    SkipValidation,
 )
 
 from typing import Annotated
 
-from fastapi import Form
+from fastapi import Form, UploadFile
 
 from app.src.database.models import Role
 
@@ -46,6 +47,7 @@ class UserUpdateModel(BaseModel):
     last_name: Annotated[str | None, Field(max_length=254)]
     phone: Annotated[str | None, Field(max_length=38)]
     birthday: date | None
+    avatar: Annotated[UploadFile, SkipValidation] = None
 
 
 @dataclass

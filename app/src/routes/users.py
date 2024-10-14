@@ -74,7 +74,6 @@ async def read_user(username: str, session: AsyncSession = Depends(get_session))
 )
 async def update_me(
     data: UserUpdateForm = Depends(),
-    file: Annotated[UploadFile, File()] = None,
     user: User = Depends(auth_service.get_current_user),
     session: AsyncSession = Depends(get_session),
     cache: Redis = Depends(get_redis_db1),
@@ -84,8 +83,6 @@ async def update_me(
 
     :param data: The data for the user to update.
     :type data: UserUpdateModel
-    :param file: The uploaded file to update avatar from.
-    :type file: UploadFile
     :param user: The current user.
     :type user: User
     :param session: The database session.
@@ -102,7 +99,7 @@ async def update_me(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(error_message),
         )
-    return await repository_users.update_user(user.email, data, file, session, cache)
+    return await repository_users.update_user(user.email, data, session, cache)
 
 
 @router.patch(
