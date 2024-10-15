@@ -210,7 +210,7 @@ async def healthchecker(session: AsyncSession = Depends(get_session)):
 
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "static"
+STATIC_DIR = BASE_DIR / "app/static"
 
 
 class StaticFilesCache(StaticFiles):
