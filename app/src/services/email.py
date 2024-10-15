@@ -22,7 +22,7 @@ conf = ConnectionConfig(
     MAIL_STARTTLS=False,
     MAIL_SSL_TLS=True,
     USE_CREDENTIALS=True,
-    VALIDATE_CERTS=False,
+    VALIDATE_CERTS=True,
     TEMPLATE_FOLDER=Path(__file__).parent / "templates",
 )
 

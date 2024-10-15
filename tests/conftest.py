@@ -24,7 +24,6 @@ from app.src.conf.config import settings
 from app.src.database.models import Base, User
 from app.src.database.connect_db import get_session, redis_db0
 
-
 SQLALCHEMY_DATABASE_URL_ASYNC = "sqlite+aiosqlite:///:memory:"
 
 engine: AsyncEngine = create_async_engine(
@@ -75,7 +74,14 @@ async def client(session):
 async def token(client, user, session, monkeypatch):
     mock_add_task = MagicMock()
     monkeypatch.setattr("fastapi.BackgroundTasks.add_task", mock_add_task)
-    await client.post("/api/auth/signup", json=user)
+    await client.post(
+        "/api/auth/signup",
+        data={
+            "username": user.get("username"),
+            "email": user.get("email"),
+            "password": user.get("password"),
+        },
+    )
     stmt = select(User).filter(User.email == user.get("email"))
     current_user = await session.execute(stmt)
     current_user = current_user.scalar()
@@ -99,6 +105,16 @@ def user():
 
 
 @pytest.fixture(scope="session")
+def user_to_update():
+    return {
+        "first_name": "test",
+        "last_name": "test",
+        "phone": "1234567890",
+        "birthday": "2001-01-01",
+    }
+
+
+@pytest.fixture(scope="session")
 def wrong_email():
     return "wrong@test.com"
 
@@ -106,27 +122,3 @@ def wrong_email():
 @pytest.fixture(scope="session")
 def new_password():
     return "0987654321"
-
-
-@pytest.fixture(scope="session")
-def contact_to_create():
-    return {
-        "first_name": "test",
-        "last_name": "test",
-        "email": "test@test.com",
-        "phone": "1234567890",
-        "birthday": str(date.today()),
-        "address": "test",
-    }
-
-
-@pytest.fixture(scope="session")
-def contact_to_update():
-    return {
-        "first_name": "new_test",
-        "last_name": "new_test",
-        "email": "new_test@test.com",
-        "phone": "0987654321",
-        "birthday": str(date.today()),
-        "address": "new_test",
-    }

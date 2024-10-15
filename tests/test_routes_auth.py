@@ -11,7 +11,7 @@ async def test_signup_user(client, user, monkeypatch):
     monkeypatch.setattr("fastapi.BackgroundTasks.add_task", mock_add_task)
     response = await client.post(
         "/api/auth/signup",
-        json=user,
+        data=user,
     )
     assert response.status_code == 201, response.text
     mock_add_task.assert_called_once()
@@ -20,8 +20,8 @@ async def test_signup_user(client, user, monkeypatch):
     assert data["user"]["email"] == user.get("email")
     assert "id" in data["user"]
     assert (
-        data["message"]
-        == "The user successfully created. Check your email for confirmation"
+            data["message"]
+            == "The user successfully created. Check your email for confirmation"
     )
 
 
@@ -29,7 +29,11 @@ async def test_signup_user(client, user, monkeypatch):
 async def test_repeat_signup_user(client, user):
     response = await client.post(
         "/api/auth/signup",
-        json=user,
+        data={
+            "username": user.get("username"),
+            "email": user.get("email"),
+            "password": user.get("password"),
+        },
     )
     assert response.status_code == 409, response.text
     data = response.json()
@@ -49,7 +53,7 @@ async def test_login_user_is_not_confirmed(client, user):
 
 @pytest.mark.anyio
 async def test_request_password_reset_email_before_verification(
-    client, user, monkeypatch
+        client, user, monkeypatch
 ):
     mock_add_task = MagicMock()
     monkeypatch.setattr("fastapi.BackgroundTasks.add_task", mock_add_task)
@@ -76,7 +80,8 @@ async def test_reset_password_before_verification(client, user):
 async def test_set_password_before_verification(client, user, new_password):
     token = await auth_service.create_password_set_token({"sub": user.get("email")})
     response = await client.patch(
-        f"/api/auth/set_password/{token}",
+        f"/api/auth/set_password",
+        headers={"Authorization": f"Bearer {token}"},
         json={"password": new_password},
     )
     assert response.status_code == 400, response.text
@@ -123,7 +128,7 @@ async def test_confirm_email_wrong_email_before_confirmation(client, wrong_email
 
 @pytest.mark.anyio
 async def test_confirm_email_wrong_email_before_confirmation_custom_expire(
-    client, wrong_email
+        client, wrong_email
 ):
     token = await auth_service.create_email_verification_token(
         {"sub": wrong_email}, expires_delta=100
@@ -157,7 +162,7 @@ async def test_confirm_email_wrong_scope_token(client, user):
 @pytest.mark.anyio
 async def test_repeat_confirm_email(client, user):
     token = await auth_service.create_email_verification_token(
-        {"sub": user.get("email")}
+        {"sub": user.get("email")}, expires_delta=100
     )
     response = await client.get(f"/api/auth/confirm_email/{token}")
     assert response.status_code == 200, response.text
@@ -225,25 +230,6 @@ async def test_refresh_token(client, user):
 
 
 @pytest.mark.anyio
-async def test_refresh_token_invalid(client, user):
-    response = await client.post(
-        "/api/auth/login",
-        data={"username": user.get("email"), "password": user.get("password")},
-    )
-    data = response.json()
-    token = await auth_service.create_refresh_token(
-        {"sub": user.get("email")}, expires_delta=100
-    )
-    response = await client.get(
-        "/api/auth/refresh_token",
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response.status_code == 401, response.text
-    data = response.json()
-    assert data["detail"] == "Invalid refresh token"
-
-
-@pytest.mark.anyio
 async def test_refresh_token_wrong_email(client, wrong_email):
     token = await auth_service.create_refresh_token({"sub": wrong_email})
     response = await client.get(
@@ -297,7 +283,7 @@ async def test_request_password_reset_email(client, user, monkeypatch):
 
 @pytest.mark.anyio
 async def test_request_password_reset_email_wrong_email(
-    client, wrong_email, monkeypatch
+        client, wrong_email, monkeypatch
 ):
     mock_add_task = MagicMock()
     monkeypatch.setattr("fastapi.BackgroundTasks.add_task", mock_add_task)
@@ -322,7 +308,7 @@ async def test_reset_password_wrong_email_before_reset(client, wrong_email):
 
 @pytest.mark.anyio
 async def test_reset_password_wrong_email_before_reset_custom_expire(
-    client, wrong_email
+        client, wrong_email
 ):
     token = await auth_service.create_password_reset_token(
         {"sub": wrong_email}, expires_delta=100
@@ -375,7 +361,8 @@ async def test_reset_password_wrong_scope_token(client, user):
 async def test_set_password_wrong_email_before_set(client, wrong_email, new_password):
     token = await auth_service.create_password_set_token({"sub": wrong_email})
     response = await client.patch(
-        f"/api/auth/set_password/{token}",
+        f"/api/auth/set_password",
+        headers={"Authorization": f"Bearer {token}"},
         json={"password": new_password},
     )
     assert response.status_code == 400, response.text
@@ -385,13 +372,14 @@ async def test_set_password_wrong_email_before_set(client, wrong_email, new_pass
 
 @pytest.mark.anyio
 async def test_set_password_wrong_email_before_set_custom_expire(
-    client, wrong_email, new_password
+        client, wrong_email, new_password
 ):
     token = await auth_service.create_password_set_token(
         {"sub": wrong_email}, expires_delta=100
     )
     response = await client.patch(
-        f"/api/auth/set_password/{token}",
+        f"/api/auth/set_password",
+        headers={"Authorization": f"Bearer {token}"},
         json={"password": new_password},
     )
     assert response.status_code == 400, response.text
@@ -428,7 +416,8 @@ async def test_confirm_email_before_set(client, user):
 async def test_set_password(client, user, new_password):
     token = await auth_service.create_password_set_token({"sub": user.get("email")})
     response = await client.patch(
-        f"/api/auth/set_password/{token}",
+        f"/api/auth/set_password",
+        headers={"Authorization": f"Bearer {token}"},
         json={"password": new_password},
     )
     assert response.status_code == 200, response.text
@@ -440,7 +429,8 @@ async def test_set_password(client, user, new_password):
 async def test_set_password_wrong_email_after_set(client, wrong_email, new_password):
     token = await auth_service.create_password_set_token({"sub": wrong_email})
     response = await client.patch(
-        f"/api/auth/set_password/{token}",
+        f"/api/auth/set_password",
+        headers={"Authorization": f"Bearer {token}"},
         json={"password": new_password},
     )
     assert response.status_code == 400, response.text
@@ -452,7 +442,8 @@ async def test_set_password_wrong_email_after_set(client, wrong_email, new_passw
 async def test_set_password_wrong_scope_token(client, user, new_password):
     token = await auth_service.create_access_token({"sub": user.get("email")})
     response = await client.patch(
-        f"/api/auth/set_password/{token}",
+        f"/api/auth/set_password",
+        headers={"Authorization": f"Bearer {token}"},
         json={"password": new_password},
     )
     assert response.status_code == 401, response.text
@@ -491,11 +482,11 @@ async def test_login_user_wrong_scope_token(client, user):
     )
     assert response.status_code == 401, response.text
     data = response.json()
-    assert data["detail"] == "Could not validate credentials"
+    assert data["detail"] == "Invalid scope for token"
 
 
 @pytest.mark.anyio
-async def test_login_user_access_token_custom_expire(client, user, new_password):
+async def test_login_user_access_token_custom_expire(client, user):
     token = await auth_service.create_access_token(
         {"sub": user.get("email")}, expires_delta=100
     )

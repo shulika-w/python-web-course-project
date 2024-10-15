@@ -1,20 +1,18 @@
 """
-module to work with QR-code
+Module to work with QR codes
 """
-
-from io import BytesIO
 
 import qrcode
 
 
-def generate_qr_code(image_url: str) -> BytesIO:
+def generate_qr_code(image_url: str) -> None:
     """
     Generates a PNG image with a QR code from the url of the image:
 
     :param image_url: URL of the image
     :type image_url: str.
-    :return BytesIO: File in image/png format with QR-code url.
-    :rtype BytesIO:
+    :return: None
+    :rtype: None
     """
     qr = qrcode.QRCode(
         version=1,
@@ -28,12 +26,4 @@ def generate_qr_code(image_url: str) -> BytesIO:
 
     # Make QR-code object
     qr_code = qr.make_image(fill_color="black", back_color="white")
-
-    qr_code.save("static/qrcode.png")
-
-    # # Save QR-code to byte object
-    # qr_code_bytes = BytesIO()
-    # qr_code.save(qr_code_bytes)
-    # qr_code_bytes.seek(0)
-
-    # return qr_code_bytes
+    qr_code.save("static/qr_code.png")

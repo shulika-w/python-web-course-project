@@ -3,7 +3,7 @@ Module of rates' schemas
 """
 
 from datetime import datetime
-from pydantic import BaseModel, Field, UUID4, ConfigDict, validator
+from pydantic import BaseModel, Field, UUID4, ConfigDict, field_validator
 
 from app.src.schemas.images import ImageDb
 
@@ -29,7 +29,7 @@ class RateImageResponse(BaseModel):
     image: ImageDb
     avg_rate: float | None
 
-    @validator('avg_rate', pre=True, always=True)
+    @field_validator("avg_rate")
     def round_avg_rate(cls, v):
         if v:
             return round(v, 2)

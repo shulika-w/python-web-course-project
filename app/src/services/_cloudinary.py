@@ -11,8 +11,6 @@ from app.src.conf.config import settings
 class CloudinaryService:
     api_name = settings.api_name.replace(" ", "_")
     public_id = f"{api_name}/"
-    transform_avatar = "c_thumb,g_face,h_200,w_200/r_max/"
-    transform_fb_avatar = "c_fill,g_face,h_120,w_80/"
 
     def __init__(self):
         cloudinary.config(

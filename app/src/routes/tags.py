@@ -1,6 +1,7 @@
 """
 Module of tags' routes
 """
+
 from typing import List
 
 from fastapi import APIRouter, HTTPException, Depends, Query, status
@@ -9,7 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.src.database.connect_db import get_session
 from app.src.database.models import User, Role
 from app.src.repository import tags as repository_tags
-from app.src.schemas.tags import TagModel, TagResponse
+from app.src.schemas.tags import TagResponse
+from app.src.schemas.images import ImageResponse
 from app.src.services.auth import auth_service
 from app.src.services.roles import RoleAccess
 
@@ -71,16 +73,9 @@ async def read_or_create_tag(
     :return: The tag with the specified title.
     :rtype: Tag
     """
-    try:
-        tag_model = TagModel(title=tag_title)
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tag's title shouldn't be less than 2 and more than 25 symbols and include #",
-        )
-    tag = await repository_tags.read_tag(tag_model.title, session)
+    tag = await repository_tags.read_tag(tag_title, session)
     if tag is None:
-        tag = await repository_tags.create_tag(tag_model.title, user, session)
+        tag = await repository_tags.create_tag(tag_title, user, session)
     return tag
 
 
@@ -103,16 +98,28 @@ async def delete_tag(
     :return: None.
     :rtype: None
     """
-    try:
-        tag_model = TagModel(title=tag_title)
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tag's title shouldn't be less than 2 and more than 25 symbols and include #",
-        )
-    tag = await repository_tags.delete_tag(tag_model.title, session)
+    tag = await repository_tags.delete_tag(tag_title, session)
     if tag is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found"
         )
     return None
+
+
+@router.get(
+    "/{tag_title}/images",
+    response_model=List[ImageResponse],
+    dependencies=[Depends(allowed_operations_read_create)],
+)
+async def read_images_by_tag(
+        tag_title: str,
+        offset: int = Query(default=0, ge=0),
+        limit: int = Query(default=10, ge=1, le=1000),
+        session: AsyncSession = Depends(get_session),
+):
+    tag = await repository_tags.read_tag(tag_title, session)
+    if tag is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found"
+        )
+    return tag.images[offset: offset + limit]

@@ -2,20 +2,24 @@
 Module of tags' CRUD
 """
 
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.engine.result import ScalarResult
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.src.database.models import Tag, User
+from app.src.schemas.tags import TagModel
 
 
 async def read_tags(
-    offset: int,
-    limit: int,
-    tag_title: str,
-    session: AsyncSession,
+        offset: int,
+        limit: int,
+        tag_title: str,
+        session: AsyncSession,
 ) -> ScalarResult:
     """
     Reads a list of tags with specified pagination parameters and search by title.
+
     :param offset: The number of tags to skip.
     :type offset: int
     :param limit: The maximum number of tags to return.
@@ -38,7 +42,8 @@ async def read_tags(
 async def read_tag(tag_title: str, session: AsyncSession) -> Tag | None:
     """
     Reads a single tag with the specified title.
-    :param tag_title: The title of the tag to retrieve
+
+    :param tag_title: The title of the tag to retrieve.
     :type tag_title: str
     :param session: The database session.
     :type session: AsyncSession
@@ -53,7 +58,8 @@ async def read_tag(tag_title: str, session: AsyncSession) -> Tag | None:
 async def create_tag(tag_title: str, user: User, session: AsyncSession) -> Tag | None:
     """
     Creates a new tag with the specified title.
-    :param tag_title: The request body with data for the tag to create.
+
+    :param tag_title: The title of the tag to create.
     :type tag_title: str
     :param user: The user who creates the tag.
     :type user: User
@@ -62,7 +68,14 @@ async def create_tag(tag_title: str, user: User, session: AsyncSession) -> Tag |
     :return: The newly created tag or None if creation failed.
     :rtype: Tag | None
     """
-    tag = Tag(title=tag_title.lower(), user_id=user.id)
+    try:
+        tag_model = TagModel(title=tag_title)
+    except Exception as error_message:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error_message),
+        )
+    tag = Tag(title=tag_model.title.lower(), user_id=user.id)
     session.add(tag)
     await session.commit()
     await session.refresh(tag)
@@ -72,14 +85,22 @@ async def create_tag(tag_title: str, user: User, session: AsyncSession) -> Tag |
 async def delete_tag(tag_title: str, session: AsyncSession) -> Tag | None:
     """
     Deletes a single tag with the specified title.
-    :param tag_title: The title of the tag to delete
+
+    :param tag_title: The title of the tag to delete.
     :type tag_title: str
     :param session: The database session.
     :type session: AsyncSession
     :return: The deleted tag or None if it did not exist.
     :rtype: Tag | None
     """
-    stmt = select(Tag).filter(Tag.title == tag_title.lower())
+    try:
+        tag_model = TagModel(title=tag_title)
+    except Exception as error_message:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error_message),
+        )
+    stmt = select(Tag).filter(Tag.title == tag_model.title.lower())
     tag = await session.execute(stmt)
     tag = tag.scalar()
     if tag:

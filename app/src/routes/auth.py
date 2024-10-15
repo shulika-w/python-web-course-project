@@ -2,20 +2,16 @@
 Module of authentication routes
 """
 
-
-from dataclasses import asdict
-import re
-from typing import Annotated
+from pydantic import EmailStr, SecretStr
 
 from fastapi import (
     APIRouter,
     HTTPException,
     Depends,
-    UploadFile,
-    File,
     Security,
     BackgroundTasks,
     Request,
+    Form,
     status,
 )
 from fastapi.security import (
@@ -27,13 +23,7 @@ from redis.asyncio.client import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.src.database.connect_db import get_session, get_redis_db1
-from app.src.schemas.users import (
-    UserModel,
-    UserRequestEmail,
-    UserPasswordSetModel,
-    UserResponse,
-    UserCreateForm
-)
+from app.src.schemas.users import UserModel, UserResponse
 from app.src.schemas.tokens import TokenModel, TokenPasswordSetModel
 from app.src.repository import users as repository_users
 from app.src.services.auth import auth_service
@@ -41,7 +31,6 @@ from app.src.services.email import (
     send_email_for_verification,
     send_email_for_password_reset,
 )
-
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
@@ -51,12 +40,11 @@ security = HTTPBearer()
     "/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
 async def signup(
-    background_tasks: BackgroundTasks,
-    request: Request,
-    data: UserCreateForm = Depends(),
-    file: Annotated[UploadFile, File()] = None,
-    session: AsyncSession = Depends(get_session),
-    cache: Redis = Depends(get_redis_db1),
+        background_tasks: BackgroundTasks,
+        request: Request,
+        data: UserModel = Depends(UserModel.as_form),
+        session: AsyncSession = Depends(get_session),
+        cache: Redis = Depends(get_redis_db1),
 ):
     """
     Handles a POST-operation to '/signup' auth subroute and creates a new user.
@@ -76,25 +64,13 @@ async def signup(
     :return: The dict with the newly created user and the message.
     :rtype: dict
     """
-    try:
-        data = UserModel(**asdict(data))
-    except Exception as error_message:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(error_message),
-        )
-    if not re.match(r"(?i)^(?!me$).*", data.username):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username shouldn't be just 'me'",
-        )
     user = await repository_users.get_user_by_email(data.email, session)
     if user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="The account already exists"
         )
-    data.password = auth_service.get_password_hash(data.password)
-    user = await repository_users.create_user(data, file, session, cache)
+    data.password = auth_service.get_password_hash(data.password.get_secret_value())
+    user = await repository_users.create_user(data, session, cache)
     email_verification_token = await auth_service.create_email_verification_token(
         {"sub": user.email}
     )
@@ -113,8 +89,8 @@ async def signup(
 
 @router.post("/login", response_model=TokenModel)
 async def login(
-    body: OAuth2PasswordRequestForm = Depends(),
-    session: AsyncSession = Depends(get_session),
+        body: OAuth2PasswordRequestForm = Depends(),
+        session: AsyncSession = Depends(get_session),
 ):
     """
     Handles a POST-operation to '/login' auth subroute and does login of user.
@@ -127,7 +103,7 @@ async def login(
     :rtype: dict
     """
     user = await repository_users.get_user_by_email(body.username, session)
-    if user is None:
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email"
         )
@@ -156,9 +132,9 @@ async def login(
 
 @router.get("/logout")
 async def logout(
-    credentials: HTTPAuthorizationCredentials = Security(security),
-    session: AsyncSession = Depends(get_session),
-    cache: Redis = Depends(get_redis_db1),
+        credentials: HTTPAuthorizationCredentials = Security(security),
+        session: AsyncSession = Depends(get_session),
+        cache: Redis = Depends(get_redis_db1),
 ):
     """
     Handles a GET-operation to '/logout' auth subroute and does logout of user.
@@ -174,7 +150,7 @@ async def logout(
     await auth_service.check_token_in_black_list(token, cache)
     email = await auth_service.decode_access_token(token)
     user = await repository_users.get_user_by_email(email, session)
-    if user is None:
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email"
         )
@@ -184,15 +160,15 @@ async def logout(
 
 @router.get("/refresh_token", response_model=TokenModel)
 async def refresh_token(
-    credentials: HTTPAuthorizationCredentials = Security(security),
-    session: AsyncSession = Depends(get_session),
-    cache: Redis = Depends(get_redis_db1),
+        http_auth_credentials: HTTPAuthorizationCredentials = Security(security),
+        session: AsyncSession = Depends(get_session),
+        cache: Redis = Depends(get_redis_db1),
 ):
     """
     Handles a GET-operation to '/refresh_token' auth subroute and updates a refresh token for a specific user.
 
-    :param credentials: The http authorization credentials of user to update the refresh token for.
-    :type credentials: HTTPAuthorizationCredentials
+    :param http_auth_credentials: The http authorization credentials of user to update the refresh token for.
+    :type http_auth_credentials: HTTPAuthorizationCredentials
     :param session: The database session.
     :type session: AsyncSession
     :param cache: The Redis client.
@@ -200,11 +176,11 @@ async def refresh_token(
     :return: The dict with generated tokens.
     :rtype: dict
     """
-    token = credentials.credentials
+    token = http_auth_credentials.credentials
     await auth_service.check_token_in_black_list(token, cache)
     email = await auth_service.decode_refresh_token(token)
     user = await repository_users.get_user_by_email(email, session)
-    if user is None:
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email"
         )
@@ -220,26 +196,26 @@ async def refresh_token(
 
 @router.post("/verification_email")
 async def request_verification_email(
-    body: UserRequestEmail,
-    background_tasks: BackgroundTasks,
-    request: Request,
-    session: AsyncSession = Depends(get_session),
+        background_tasks: BackgroundTasks,
+        request: Request,
+        email: EmailStr = Form(...),
+        session: AsyncSession = Depends(get_session),
 ):
     """
     Handles a POST-operation to '/verification_email' auth subroute and sends an email for verification of the user's email.
 
-    :param body: The request body with an email to verify.
-    :type body: UserRequestEmail
     :param background_tasks: The object for background tasks.
     :type background_tasks: BackgroundTasks
     :param request: The http request object.
     :type request: Request
+    :param email: The form with an email to verify.
+    :type email: EmailStr
     :param session: The database session.
     :type session: AsyncSession
     :return: The dict with a message.
     :rtype: dict
     """
-    user = await repository_users.get_user_by_email(body.email, session)
+    user = await repository_users.get_user_by_email(email, session)
     if user:
         if user.is_email_confirmed:
             return {"message": "The email is already confirmed"}
@@ -259,9 +235,9 @@ async def request_verification_email(
 
 @router.get("/confirm_email/{token}")
 async def confirm_email(
-    token: str,
-    session: AsyncSession = Depends(get_session),
-    cache: Redis = Depends(get_redis_db1),
+        token: str,
+        session: AsyncSession = Depends(get_session),
+        cache: Redis = Depends(get_redis_db1),
 ):
     """
     Handles a GET-operation to '/confirm_email/{token}' auth subroute and confirms the user's email.
@@ -278,7 +254,7 @@ async def confirm_email(
     await auth_service.check_token_in_black_list(token, cache)
     email = await auth_service.decode_email_verification_token(token)
     user = await repository_users.get_user_by_email(email, session)
-    if user is None or not user.is_password_valid:
+    if not user or not user.is_password_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Verification error"
         )
@@ -291,16 +267,16 @@ async def confirm_email(
 
 @router.post("/password_reset_email")
 async def request_password_reset_email(
-    body: UserRequestEmail,
-    background_tasks: BackgroundTasks,
-    request: Request,
-    session: AsyncSession = Depends(get_session),
+        background_tasks: BackgroundTasks,
+        request: Request,
+        email: EmailStr = Form(...),
+        session: AsyncSession = Depends(get_session),
 ):
     """
     Handles a POST-operation to '/password_reset_email' auth subroute and sends an email for the user's password reset.
 
-    :param body: The request body with an user's email to reset password.
-    :type body: UserRequestEmail
+    :param body: The form with an user's email to reset password.
+    :type body: EmailStr
     :param background_tasks: The object for background tasks.
     :type background_tasks: BackgroundTasks
     :param request: The http request object.
@@ -310,7 +286,7 @@ async def request_password_reset_email(
     :return: The dict with a message.
     :rtype: dict
     """
-    user = await repository_users.get_user_by_email(body.email, session)
+    user = await repository_users.get_user_by_email(email, session)
     if user and user.is_email_confirmed:
         password_reset_token = await auth_service.create_password_reset_token(
             {"sub": user.email}
@@ -327,9 +303,9 @@ async def request_password_reset_email(
 
 @router.get("/reset_password/{token}", response_model=TokenPasswordSetModel)
 async def reset_password(
-    token: str,
-    session: AsyncSession = Depends(get_session),
-    cache: Redis = Depends(get_redis_db1),
+        token: str,
+        session: AsyncSession = Depends(get_session),
+        cache: Redis = Depends(get_redis_db1),
 ):
     """
     Handles a GET-operation to '/reset_password/{token}' auth subroute and resets the user's password.
@@ -346,7 +322,7 @@ async def reset_password(
     await auth_service.check_token_in_black_list(token, cache)
     email = await auth_service.decode_password_reset_token(token)
     user = await repository_users.get_user_by_email(email, session)
-    if user is None or not user.is_email_confirmed:
+    if not user or not user.is_email_confirmed:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Reset password error"
         )
@@ -361,10 +337,10 @@ async def reset_password(
 
 @router.patch("/set_password")
 async def set_password(
-    body: UserPasswordSetModel,
-    credentials: HTTPAuthorizationCredentials = Security(security),
-    session: AsyncSession = Depends(get_session),
-    cache: Redis = Depends(get_redis_db1),
+        password: SecretStr = Form(..., min_length=8, max_length=72),
+        credentials: HTTPAuthorizationCredentials = Security(security),
+        session: AsyncSession = Depends(get_session),
+        cache: Redis = Depends(get_redis_db1),
 ):
     """
     Handles a PATCH-operation to '/set_password' auth subroute and sets the user's new password.
@@ -384,12 +360,12 @@ async def set_password(
     await auth_service.check_token_in_black_list(token, cache)
     email = await auth_service.decode_password_set_token(token)
     user = await repository_users.get_user_by_email(email, session)
-    if user is None or not user.is_email_confirmed or user.is_password_valid:
+    if not user or not user.is_email_confirmed or user.is_password_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Set password error",
         )
-    body.password = auth_service.get_password_hash(body.password)
+    password = auth_service.get_password_hash(password.get_secret_value())
     await auth_service.blacklist_token(token, cache)
-    await repository_users.set_password(email, body.password, session, cache)
+    await repository_users.set_password(email, password, session, cache)
     return {"message": "The password has been reset"}

@@ -2,14 +2,12 @@
 Module of authentication class and methods
 """
 
-
 from datetime import datetime, timedelta, timezone
 from os import urandom
-from typing import Optional
 import pickle
+from typing import Optional
 
-from jose import jwt
-from jose.exceptions import JWTError
+from jose import JWTError, jwt
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
@@ -19,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.src.conf.config import settings
 from app.src.database.connect_db import get_session, get_redis_db1
 from app.src.repository import users as repository_users
+
 
 class Auth:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -51,7 +50,7 @@ class Auth:
         return self.pwd_context.hash(password)
 
     async def create_access_token(
-        self, data: dict, expires_delta: Optional[float] = None
+            self, data: dict, expires_delta: Optional[float] = None
     ):
         """
         Creates the access token.
@@ -77,7 +76,7 @@ class Auth:
         return encoded_access_token
 
     async def create_refresh_token(
-        self, data: dict, expires_delta: Optional[float] = None
+            self, data: dict, expires_delta: Optional[float] = None
     ):
         """
         Creates the refresh token.
@@ -107,7 +106,7 @@ class Auth:
         return encoded_refresh_token
 
     async def create_email_verification_token(
-        self, data: dict, expires_delta: Optional[float] = None
+            self, data: dict, expires_delta: Optional[float] = None
     ):
         """
         Creates the email verification token.
@@ -137,7 +136,7 @@ class Auth:
         return encoded_email_verification_token
 
     async def create_password_reset_token(
-        self, data: dict, expires_delta: Optional[float] = None
+            self, data: dict, expires_delta: Optional[float] = None
     ):
         """
         Creates the password reset token.
@@ -167,7 +166,7 @@ class Auth:
         return encoded_password_reset_token
 
     async def create_password_set_token(
-        self, data: dict, expires_delta: Optional[float] = None
+            self, data: dict, expires_delta: Optional[float] = None
     ):
         """
         Creates the password set token.
@@ -199,6 +198,7 @@ class Auth:
     async def decode_access_token(self, access_token: str):
         """
         Decodes the access token.
+
         :param access_token: The access token to decode.
         :type access_token: str
         :return: The email from the access token.
@@ -223,7 +223,6 @@ class Auth:
             )
         except JWTError:
             raise credentials_exception
-
 
     async def decode_refresh_token(self, refresh_token: str):
         """
@@ -375,10 +374,10 @@ class Auth:
             )
 
     async def get_current_user(
-        self,
-        access_token: str = Depends(oauth2_scheme),
-        session: AsyncSession = Depends(get_session),
-        cache: Redis = Depends(get_redis_db1),
+            self,
+            access_token: str = Depends(oauth2_scheme),
+            session: AsyncSession = Depends(get_session),
+            cache: Redis = Depends(get_redis_db1),
     ):
         """
         Gets the current user.

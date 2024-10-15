@@ -6,9 +6,9 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'GoIT HW Contacts API'
-copyright = '2024, Volodymyr Shulika'
-author = 'Volodymyr Shulika'
+project = 'PhotoShare API'
+copyright = '2024, Pynctual Adventurers'
+author = 'Pynctual Adventurers'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

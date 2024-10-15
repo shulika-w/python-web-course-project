@@ -2,12 +2,12 @@
 Main module
 """
 
-
 from contextlib import asynccontextmanager
 import pathlib
+import sys
 from time import time
 
-from fastapi import FastAPI, Depends, HTTPException, Request, status
+from fastapi import FastAPI, Depends, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -29,9 +29,13 @@ async def lifespan(app: FastAPI):
     Handles lifespan events.
 
     """
-    await startup()
-    yield
-    await shutdown()
+    healthy_start = await startup()
+    if healthy_start:
+        yield
+        await shutdown()
+    else:
+        await engine.dispose()
+        sys.exit()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -42,9 +46,14 @@ async def startup():
     Handles startup events.
 
     """
+    try:
+        await redis_db0.ping()
+    except Exception:
+        return False
     await pool_redis_db.disconnect()
     await redis_db0.flushall()
     await FastAPILimiter.init(redis_db0)
+    return True
 
 
 async def shutdown():
@@ -88,7 +97,6 @@ async def add_process_time_header(request: Request, call_next: callable):
 
 
 BASE_API_ROUTE = "/api"
-
 
 app.include_router(
     auth.router,
@@ -163,6 +171,7 @@ app.include_router(
     ],
 )
 
+
 @app.get(
     BASE_API_ROUTE + "/healthchecker",
     dependencies=[
@@ -201,12 +210,28 @@ async def healthchecker(session: AsyncSession = Depends(get_session)):
 
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "app" / "static"
+STATIC_DIR = BASE_DIR / "static"
+
+
+class StaticFilesCache(StaticFiles):
+    def __init__(
+            self,
+            *args,
+            cachecontrol="public, max-age=31536000, s-maxage=31536000, immutable",
+            **kwargs,
+    ):
+        self.cachecontrol = cachecontrol
+        super().__init__(*args, **kwargs)
+
+    def file_response(self, *args, **kwargs) -> Response:
+        resp: Response = super().file_response(*args, **kwargs)
+        resp.headers.setdefault("Cache-Control", self.cachecontrol)
+        return resp
 
 
 app.mount(
     "/static",
-    StaticFiles(directory=STATIC_DIR),
+    app=StaticFilesCache(directory=STATIC_DIR, cachecontrol="private, max-age=3600"),
     name="static",
 )
 
@@ -244,4 +269,4 @@ async def read_root():
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host=settings.api_host, port=settings.api_port, reload=True)
+    uvicorn.run("main:app", host=settings.api_host, port=settings.api_port)

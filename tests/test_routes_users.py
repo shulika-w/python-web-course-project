@@ -1,7 +1,8 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
-import cloudinary
 import pytest
+
+from app.src.services._cloudinary import cloudinary_service
 
 
 @pytest.mark.anyio
@@ -15,17 +16,15 @@ async def test_read_me(client, user, token):
 
 
 @pytest.mark.anyio
-async def test_update_avatar(client, token):
-    avatar_url = "http://test.com/avatar"
-    cloudinary.config = MagicMock()
-    cloudinary.uploader.upload = MagicMock()
-    cloudinary.CloudinaryImage = MagicMock()
-    cloudinary.CloudinaryImage.return_value.build_url.return_value = avatar_url
-    response = await client.patch(
-        "/api/users/avatar",
-        files={"file": __file__},
+async def test_update_me(client, user_to_update, token):
+    response = await client.put(
+        "/api/users/me",
         headers={"Authorization": f"Bearer {token}"},
+        data=user_to_update,
     )
     assert response.status_code == 200, response.text
     data = response.json()
-    assert data["avatar"] == avatar_url
+    assert data["first_name"] == user_to_update.get("first_name")
+    assert data["last_name"] == user_to_update.get("last_name")
+    assert data["phone"] == user_to_update.get("phone")
+    assert data["birthday"] == user_to_update.get("birthday")

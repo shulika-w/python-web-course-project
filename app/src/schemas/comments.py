@@ -15,7 +15,6 @@ class CommentResponse(CommentModel):
 
     id: UUID4 | int
     image_id: UUID4 | int
-    text: str
     user_id: UUID4 | int
     parent_id: UUID4 | None = None
     created_at: datetime
