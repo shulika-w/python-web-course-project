@@ -2,6 +2,7 @@
 Main module
 """
 
+import os
 from contextlib import asynccontextmanager
 import pathlib
 import sys
@@ -212,6 +213,8 @@ async def healthchecker(session: AsyncSession = Depends(get_session)):
 BASE_DIR = pathlib.Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "app/static"
 
+if not os.path.exists(STATIC_DIR):
+    os.makedirs(STATIC_DIR)
 
 class StaticFilesCache(StaticFiles):
     def __init__(
