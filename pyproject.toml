@@ -35,6 +35,8 @@ poetry-plugin-export = "^1.8.0"
 python-jose = "^3.3.0"
 qrcode = "^8.0"
 nest-asyncio = "^1.6.0"
+wheel = "^0.44.0"
+setuptools = "^75.2.0"
 
 
 [build-system]
